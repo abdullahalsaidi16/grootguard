@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#0d0d0d"/>
+  <!-- an H3 cell, in the priority ramp's high step -->
+  <path d="M16 4 26 10v12l-10 6-10-6V10z" fill="none" stroke="#e07a22" stroke-width="2.5"/>
+  <path d="M16 11 20.5 13.5v5L16 21l-4.5-2.5v-5z" fill="#ffd08a"/>
+</svg>

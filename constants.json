@@ -1,0 +1,462 @@
+{
+  "$comment": "FUSION model constants (PRD F19). Single source of truth: read by the Python pipeline (pipeline/config.py) and by the React app (F18 methodology panel renders this file verbatim). Every entry carries a `status`: 'source' = traceable to a cited public reference; 'assumption' = a modelling choice made by the team, deliberate but not externally sourced; 'placeholder' = the team has NOT confirmed this value and it must not be presented as authoritative.",
+  "schema_version": 1,
+
+  "grid": {
+    "h3_resolution": {
+      "value": 6,
+      "unit": "H3 resolution",
+      "label": "Analysis cell resolution",
+      "status": "assumption",
+      "source": "PRD F1. Mean cell area at res 6 is 36.13 km^2 (h3.average_hexagon_area)."
+    },
+    "weather_h3_resolution": {
+      "value": 3,
+      "unit": "H3 resolution",
+      "label": "Weather sampling resolution",
+      "status": "assumption",
+      "source": "PRD §7.2: weather fields are smooth at tens-of-km scale, so they are sampled on a coarse grid and applied to the cells within each."
+    }
+  },
+
+  "fuel": {
+    "w_tree": {
+      "value": 1.0,
+      "unit": "weight",
+      "label": "Tree cover weight in fuel load",
+      "status": "assumption",
+      "source": "PRD §9.1"
+    },
+    "w_shrub": {
+      "value": 0.8,
+      "unit": "weight",
+      "label": "Shrub cover weight in fuel load",
+      "status": "assumption",
+      "source": "PRD §9.1"
+    },
+    "w_grass": {
+      "value": 0.5,
+      "unit": "weight",
+      "label": "Grass cover weight in fuel load",
+      "status": "assumption",
+      "source": "PRD §9.1"
+    },
+    "burnable_threshold": {
+      "value": 0.15,
+      "unit": "fuel index",
+      "label": "Minimum fuel for a cell to be treated as burnable",
+      "status": "assumption",
+      "source": "PRD §9.1. Cells at or below this are shown as not-applicable (F3), not as low priority."
+    },
+    "worldcover_classes": {
+      "value": { "tree": 10, "shrub": 20, "grass": 30 },
+      "unit": "ESA WorldCover class code",
+      "label": "Land-cover classes mapped to fuel types",
+      "status": "source",
+      "source": "ESA WorldCover 10 m 2021 v200 product user manual, class legend (10 Tree cover, 20 Shrubland, 30 Grassland)."
+    },
+    "sample_resolution_m": {
+      "value": 80,
+      "unit": "metres",
+      "label": "Ground sampling distance used to read WorldCover",
+      "status": "assumption",
+      "source": "WorldCover overview level 8 (10 m x 8). Reading all of Spain at native 10 m is ~10^10 pixels (PRD §11.6). Overviews were verified to use mode/nearest resampling, so class codes stay valid. Cover fractions are therefore a spatial SAMPLE (~5,600 samples per 36 km^2 cell), not an exhaustive area integral."
+    },
+    "broadleaf_share_weight": {
+      "value": 0.0,
+      "unit": "weight",
+      "label": "Broadleaf forest share term",
+      "status": "source",
+      "source": "Set to zero. PRD §7.2 records this as a data gap: ESA WorldCover has no leaf-type class and no substitute source was identified. The term is disabled rather than guessed (D1)."
+    }
+  },
+
+  "conditions": {
+    "w_base": {
+      "value": 0.6,
+      "unit": "multiplier",
+      "label": "Fire-weather multiplier baseline",
+      "status": "assumption",
+      "source": "PRD §9.2"
+    },
+    "w_coef_tmax": {
+      "value": 0.25,
+      "unit": "multiplier per z-score",
+      "label": "Weight on daily max temperature anomaly",
+      "status": "assumption",
+      "source": "PRD §9.2"
+    },
+    "w_coef_rhmin": {
+      "value": 0.25,
+      "unit": "multiplier per z-score",
+      "label": "Weight on (negated) minimum relative humidity anomaly",
+      "status": "assumption",
+      "source": "PRD §9.2"
+    },
+    "w_coef_wind": {
+      "value": 0.25,
+      "unit": "multiplier per z-score",
+      "label": "Weight on max wind speed anomaly",
+      "status": "assumption",
+      "source": "PRD §9.2"
+    },
+    "w_coef_days_since_rain": {
+      "value": 0.25,
+      "unit": "multiplier per z-score",
+      "label": "Weight on days-since-rain anomaly",
+      "status": "assumption",
+      "source": "PRD §9.2. NOTE (PRD §11.2, open question): days_since_rain feeds W while precipitation also drives the moisture term M, so dryness is partly double-counted. Retained as specified; set this to 0 to test the alternative."
+    },
+    "w_clamp_min": {
+      "value": 0.6,
+      "unit": "multiplier",
+      "label": "Lower clamp on fire-weather multiplier",
+      "status": "assumption",
+      "source": "PRD §9.2"
+    },
+    "w_clamp_max": {
+      "value": 1.6,
+      "unit": "multiplier",
+      "label": "Upper clamp on fire-weather multiplier",
+      "status": "assumption",
+      "source": "PRD §9.2"
+    },
+    "rain_day_threshold_mm": {
+      "value": 1.0,
+      "unit": "mm/day",
+      "label": "Daily precipitation above which a day counts as a rain day",
+      "status": "assumption",
+      "source": "Needed to evaluate days_since_rain, which PRD §9.2 names but does not define. 1 mm/day is the conventional wet-day threshold used by WMO-style climate indices."
+    },
+    "moisture_window_days": {
+      "value": 30,
+      "unit": "days",
+      "label": "Antecedent precipitation window for the moisture proxy",
+      "status": "assumption",
+      "source": "PRD §9.2 ('30-day antecedent precipitation')"
+    },
+    "moisture_saturation_mm": {
+      "value": 60.0,
+      "unit": "mm over the window",
+      "label": "Antecedent precipitation at which the moisture proxy M reaches 1",
+      "status": "placeholder",
+      "source": "PRD §9.2 defines M only as 'a moisture proxy 0-1 from 30-day antecedent precipitation' and gives no scale. M = clamp(precip_30d / this value, 0, 1). The team has not confirmed this figure."
+    },
+    "combustion_floor": {
+      "value": 0.4,
+      "unit": "multiplier",
+      "label": "Combustion multiplier at full moisture",
+      "status": "assumption",
+      "source": "PRD §9.2: COMBUSTION = F x W x (0.4 + 0.6 x (1 - M))"
+    },
+    "combustion_moisture_span": {
+      "value": 0.6,
+      "unit": "multiplier",
+      "label": "Additional combustion multiplier at zero moisture",
+      "status": "assumption",
+      "source": "PRD §9.2"
+    }
+  },
+
+  "consequence": {
+    "exposure_offset": {
+      "value": 0.05,
+      "unit": "fuel index",
+      "label": "Fuel offset in the wildland-exposure fraction",
+      "status": "assumption",
+      "source": "PRD §9.3: expF = clamp((F - 0.05) x 1.6, 0.03, 1)"
+    },
+    "exposure_slope": {
+      "value": 1.6,
+      "unit": "per fuel index",
+      "label": "Slope of the wildland-exposure fraction",
+      "status": "assumption",
+      "source": "PRD §9.3"
+    },
+    "exposure_min": {
+      "value": 0.03,
+      "unit": "fraction",
+      "label": "Floor on exposed population share",
+      "status": "assumption",
+      "source": "PRD §9.3. Keeps dense city cores near zero without making them exactly zero."
+    },
+    "exposure_max": {
+      "value": 1.0,
+      "unit": "fraction",
+      "label": "Ceiling on exposed population share",
+      "status": "assumption",
+      "source": "PRD §9.3"
+    },
+    "pop_normaliser": {
+      "value": 8000.0,
+      "unit": "people per consequence point",
+      "label": "Population scale in the consequence score",
+      "status": "assumption",
+      "source": "PRD §9.3: pop_exposed / 8000. Sets one consequence point equal to 8,000 exposed residents, which puts population on the same numeric footing as the asset scores below."
+    },
+    "neighbour_weight": {
+      "value": 0.5,
+      "unit": "weight",
+      "label": "Weight on adjacent cells' exposed population",
+      "status": "assumption",
+      "source": "PRD §9.3. Applied to the six immediate H3 neighbours (k-ring 1, excluding the cell itself)."
+    },
+    "asset_scores": {
+      "value": {
+        "hospital": 10,
+        "power_plant": 9,
+        "substation": 8,
+        "school": 4,
+        "industrial": 3,
+        "rail_motorway": 2
+      },
+      "unit": "consequence points per asset",
+      "label": "Consequence weight by asset class",
+      "status": "assumption",
+      "source": "PRD §9.3"
+    },
+    "asset_class_cap": {
+      "value": 20.0,
+      "unit": "consequence points per class per cell",
+      "label": "Cap on any single asset class's contribution to one cell",
+      "status": "placeholder",
+      "source": "PRD §9.3 requires that 'each asset class's contribution per cell is capped' but does not give the cap. Set here so that no class can outweigh roughly two hospitals; prevents a cell with many schools or a long motorway run from dominating the ranking. NOT confirmed by the team."
+    },
+    "cascade_coefficient": {
+      "value": 0.002,
+      "unit": "consequence points per person within the radius",
+      "label": "Cascade term for power assets",
+      "status": "assumption",
+      "source": "PRD §9.3. Applied to substations and power plants only: a power asset is scored for the people in the area it sits in. This is a PROXIMITY measure - the model does not trace which people are actually supplied by which asset."
+    },
+    "cascade_applies_to": {
+      "value": ["power_plant", "substation"],
+      "unit": "asset classes",
+      "label": "Asset classes receiving the cascade term",
+      "status": "assumption",
+      "source": "PRD §9.3. PRD §11.3 asks as an open question whether hospitals should also receive it; they currently do not."
+    },
+    "cascade_radius_km": {
+      "value": 10.0,
+      "unit": "kilometres",
+      "label": "Radius for the cascade population count",
+      "status": "assumption",
+      "source": "PRD §9.3 ('population within ~10 km'). Implemented as the H3 res-6 k-ring that covers this radius."
+    },
+    "natura_weight": {
+      "value": 0.0,
+      "unit": "consequence points per unit fraction",
+      "label": "Protected-habitat (Natura 2000) term",
+      "status": "source",
+      "source": "PRD §9.3 specifies 6 x natura_fraction, but PRD §7.2 lists the Natura 2000 dataset as unverified and possibly login-walled, with 'omit the term, weight 0' as the fallback. The dataset was not obtained, so the term is disabled (D2) rather than estimated. Restore to 6.0 if the layer is added."
+    },
+    "natura_weight_if_available": {
+      "value": 6.0,
+      "unit": "consequence points per unit fraction",
+      "label": "Natura 2000 weight specified by the model",
+      "status": "assumption",
+      "source": "PRD §9.3. Recorded for transparency; inactive while the source is unavailable."
+    }
+  },
+
+  "allocation": {
+    "strategic_share": {
+      "value": 0.25,
+      "unit": "fraction of burnable area",
+      "label": "Share of each cell's burnable area actually treated",
+      "status": "assumption",
+      "source": "PRD §9.4 (STRAT). Prevention treats fuel breaks and strategic mosaics, not whole landscapes."
+    },
+    "budget_max_eur": {
+      "value": 500000000,
+      "unit": "EUR",
+      "label": "Maximum budget on the slider",
+      "status": "assumption",
+      "source": "PRD F9 (EUR 0 to EUR 500M)"
+    },
+    "instruments": {
+      "grazing": {
+        "label": "Extensive grazing (targeted livestock fuel reduction)",
+        "cost_per_ha_eur": {
+          "value": { "low": 42, "high": 132 },
+          "unit": "EUR/ha",
+          "status": "assumption",
+          "source": "PRD §9.4. Mid-point (87 EUR/ha) is used for costing; the spread is shown in the methodology panel. Underlying citation not supplied with the brief."
+        },
+        "effectiveness": {
+          "value": { "worst": 0.25, "best": 0.45 },
+          "unit": "fraction of cell priority removed",
+          "status": "placeholder",
+          "source": "PRD §9.4 states effectiveness ranges are NOT YET DEFINED by the team and must ship as labelled placeholders. Illustrative only - do not cite."
+        },
+        "national_cap_ha": {
+          "value": 120000,
+          "unit": "ha/year",
+          "status": "placeholder",
+          "source": "PRD §9.4 notes grazing is capped because shepherds are scarce, but gives no figure. Illustrative only - do not cite."
+        }
+      },
+      "prescribed_burning": {
+        "label": "Prescribed burning",
+        "cost_per_ha_eur": {
+          "value": { "low": 250, "high": 250 },
+          "unit": "EUR/ha",
+          "status": "assumption",
+          "source": "PRD §9.4 (~250 EUR/ha). Underlying citation not supplied with the brief."
+        },
+        "effectiveness": {
+          "value": { "worst": 0.4, "best": 0.65 },
+          "unit": "fraction of cell priority removed",
+          "status": "placeholder",
+          "source": "PRD §9.4: not yet defined by the team. Illustrative only - do not cite."
+        },
+        "national_cap_ha": {
+          "value": 45000,
+          "unit": "ha/year",
+          "status": "placeholder",
+          "source": "PRD §9.4 notes burning is capped by suitable weather windows, but gives no figure. Illustrative only - do not cite."
+        }
+      },
+      "mechanical_clearing": {
+        "label": "Mechanical clearing",
+        "cost_per_ha_eur": {
+          "value": { "low": 1200, "high": 1200 },
+          "unit": "EUR/ha",
+          "status": "assumption",
+          "source": "PRD §9.4 (~1,200 EUR/ha). Underlying citation not supplied with the brief."
+        },
+        "effectiveness": {
+          "value": { "worst": 0.5, "best": 0.75 },
+          "unit": "fraction of cell priority removed",
+          "status": "placeholder",
+          "source": "PRD §9.4: not yet defined by the team. Illustrative only - do not cite."
+        },
+        "national_cap_ha": {
+          "value": null,
+          "unit": "ha/year",
+          "status": "assumption",
+          "source": "PRD §9.4: uncapped."
+        }
+      },
+      "wui_hardening": {
+        "label": "Wildland-urban interface hardening",
+        "cost_per_ha_eur": {
+          "value": { "low": 4500, "high": 4500 },
+          "unit": "EUR/ha",
+          "status": "placeholder",
+          "source": "PRD §9.4 says only 'high cost' and gives no figure. Illustrative only - do not cite."
+        },
+        "effectiveness": {
+          "value": { "worst": 0.55, "best": 0.85 },
+          "unit": "fraction of cell priority removed",
+          "status": "placeholder",
+          "source": "PRD §9.4: not yet defined by the team. Illustrative only - do not cite."
+        },
+        "national_cap_ha": {
+          "value": null,
+          "unit": "ha/year",
+          "status": "assumption",
+          "source": "PRD §9.4: uncapped."
+        },
+        "min_exposed_population": {
+          "value": 500,
+          "unit": "exposed residents in the cell",
+          "status": "placeholder",
+          "source": "PRD §9.4 restricts this instrument to cells where exposed population is 'high' but sets no threshold. Illustrative only - do not cite."
+        }
+      }
+    }
+  },
+
+  "scenarios": {
+    "severe": {
+      "label": "Severe season",
+      "years": { "value": [2022, 2025], "status": "assumption", "source": "PRD §9.5: the hotter of 2022 and 2025 summer conditions, selected per weather cell." },
+      "effectiveness_case": { "value": "worst", "status": "assumption", "source": "PRD §9.5" }
+    },
+    "average": {
+      "label": "Average season",
+      "years": { "value": "all_available", "status": "assumption", "source": "PRD §9.5: mean of available years." },
+      "effectiveness_case": { "value": "mid", "status": "assumption", "source": "PRD §9.5. 'Mid' is the mean of the worst and best effectiveness values, which are themselves placeholders." }
+    },
+    "mild": {
+      "label": "Mild season",
+      "years": { "value": [2018], "status": "assumption", "source": "PRD §9.5" },
+      "effectiveness_case": { "value": "best", "status": "assumption", "source": "PRD §9.5" }
+    },
+    "summer_months": {
+      "value": [6, 7, 8, 9],
+      "unit": "month numbers",
+      "label": "Months treated as the fire season",
+      "status": "assumption",
+      "source": "PRD §9.5 refers to 'summer conditions' without defining the window. June-September covers the Spanish fire season."
+    }
+  },
+
+  "workforce": {
+    "hectares_per_worker_year": {
+      "value": 45,
+      "unit": "ha per worker per year",
+      "label": "Treated area one field worker covers in a year",
+      "status": "placeholder",
+      "source": "Needed for the implied-workforce figure in PRD F12. No source was supplied with the brief and the team has not confirmed it. Illustrative only - do not cite."
+    }
+  },
+
+  "data_sources": {
+    "boundary": {
+      "label": "Country boundary",
+      "used": "geoBoundaries gbOpen ESP ADM0",
+      "status": "source",
+      "source": "https://www.geoboundaries.org/api/current/gbOpen/ESP/ADM0/ - derived from Instituto Geografico Nacional. Licence: CC BY 4.0. Verified reachable 19 Sep 2026."
+    },
+    "population": {
+      "label": "Population",
+      "used": "Kontur Population Spain, H3 res 8, 2023-11-01",
+      "status": "source",
+      "source": "https://data.humdata.org/dataset/kontur-population-spain - GeoPackage, no login. Licence: CC BY 4.0 (Kontur, derived from GHSL/Facebook/Microsoft/OSM). Verified reachable 19 Sep 2026."
+    },
+    "fuel": {
+      "label": "Fuel / vegetation cover",
+      "used": "ESA WorldCover 10 m 2021 v200",
+      "status": "source",
+      "source": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ - public bucket, no login. Licence: CC BY 4.0. Verified reachable and range-readable 19 Sep 2026."
+    },
+    "assets": {
+      "label": "Critical assets and place names",
+      "used": "OpenStreetMap via Overpass API",
+      "status": "source",
+      "source": "https://overpass-api.de/api/interpreter - requires a descriptive User-Agent. Licence: ODbL 1.0, (c) OpenStreetMap contributors. Verified reachable 19 Sep 2026."
+    },
+    "weather": {
+      "label": "Current and historical weather",
+      "used": "Open-Meteo forecast API and archive (ERA5) API",
+      "status": "source",
+      "source": "https://api.open-meteo.com/v1/forecast and https://archive-api.open-meteo.com/v1/archive - free, no key. Licence: CC BY 4.0; data derived from ERA5 (Copernicus). Variable names temperature_2m_max, relative_humidity_2m_min, wind_speed_10m_max, precipitation_sum confirmed against live responses 19 Sep 2026."
+    },
+    "fire_danger_overlay": {
+      "label": "Official fire-danger forecast (F8)",
+      "used": "EFFIS WMS layer mf010.fwi",
+      "status": "source",
+      "source": "https://maps.effis.emergency.copernicus.eu/effis - SUBSTITUTION (D2): the endpoint given in PRD §7.2 (ies-ows.jrc.ec.europa.eu/effis) returns 'msLoadMap(): Unable to access file' and serves no layers. The Copernicus-hosted EFFIS endpoint was used instead; layer mf010.fwi, EPSG:4326, WMS 1.1.1, time dimension from 2018-01-01. Verified rendering over Spain 19 Sep 2026."
+    },
+    "basemap": {
+      "label": "Basemap",
+      "used": "CARTO dark-matter GL style",
+      "status": "source",
+      "source": "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json - token-free. (c) OpenStreetMap contributors, (c) CARTO. Verified reachable 19 Sep 2026. Per C3 the app functions without it."
+    },
+    "natura2000": {
+      "label": "Protected habitat",
+      "used": "NOT OBTAINED",
+      "status": "source",
+      "source": "PRD §7.2 lists this as unverified and possibly login-walled. Not obtained within the time box, so the natura term carries weight 0 (D2)."
+    },
+    "broadleaf": {
+      "label": "Broadleaf forest share",
+      "used": "NOT OBTAINED",
+      "status": "source",
+      "source": "PRD §7.2 records this as a data gap with no identified source. Term weight 0 (D2)."
+    }
+  }
+}

@@ -1,0 +1,18 @@
+# C6: raw downloads are not committed, prepared outputs are
+data/raw/
+.venv/
+__pycache__/
+*.pyc
+node_modules/
+app/dist/
+.DS_Store
+.cache/
+app/public/maplibre/
+data/interim/
+app/public/data/
+
+# Agent tooling: publish only the skill written for this repository.
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/fusion-data/
