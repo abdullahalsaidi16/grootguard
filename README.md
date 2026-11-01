@@ -76,6 +76,24 @@ can see, so without staging it the built site 404s and **the map renders nothing
 provenance and the non-obvious gotchas (why exposure is computed at res 8, why the grid
 includes cells that only intersect Spain, why roads count corridors rather than OSM ways).
 
+### Deploying
+
+The build is a folder of static files with hash routing and no backend, so any static
+host works and none of them need rewrite rules. `base` is relative, so it also works from
+a subpath without reconfiguration (verified against a `/grootguard/` prefix).
+
+Deployed via **GitHub Pages**: `.github/workflows/deploy.yml` builds on every push to
+`main`, runs the model tests, and publishes only if they pass. Enable it once with repo
+**Settings → Pages → Source: GitHub Actions**; the site then lives at
+`https://abdullahalsaidi16.github.io/grootguard/`.
+
+Any other static host works without code changes — build command `npm run build`, base
+directory `app`, output `app/dist`.
+
+A clean checkout builds correctly — `prebuild` stages the datasets from `data/prepared/`
+and the MapLibre worker from `node_modules` into `app/public/`, both of which are
+gitignored by design. Built site is ~8.9 MB, of which ~5.9 MB is the prepared data.
+
 ---
 
 ## How the model works
