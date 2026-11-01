@@ -1,5 +1,7 @@
 # FUSION
 
+### → [abdullahalsaidi16.github.io/grootguard](https://abdullahalsaidi16.github.io/grootguard/)
+
 **A web map of Spain that fuses fuel, current weather and consequence-of-loss into one
 ranked prevention priority per area, and turns a prevention budget into an allocation
 across real prevention instruments.**
@@ -82,13 +84,23 @@ The build is a folder of static files with hash routing and no backend, so any s
 host works and none of them need rewrite rules. `base` is relative, so it also works from
 a subpath without reconfiguration (verified against a `/grootguard/` prefix).
 
-Deployed via **GitHub Pages**: `.github/workflows/deploy.yml` builds on every push to
-`main`, runs the model tests, and publishes only if they pass. Enable it once with repo
-**Settings → Pages → Source: GitHub Actions**; the site then lives at
-`https://abdullahalsaidi16.github.io/grootguard/`.
+Live at **<https://abdullahalsaidi16.github.io/grootguard/>**, published by
+`.github/workflows/deploy.yml` on every push to `main` — it runs the model tests first and
+publishes only if they pass.
 
-Any other static host works without code changes — build command `npm run build`, base
-directory `app`, output `app/dist`.
+**If you fork this, enable Pages before the first run.** The workflow cannot bootstrap it:
+`actions/configure-pages` fails with *"Create Pages site failed — Resource not accessible
+by integration"*, and `enablement: true` does not help, because `GITHUB_TOKEN` is not
+allowed to create a Pages site even with `pages: write`. The site has to exist first, via
+repo **Settings → Pages → Source: GitHub Actions**, or in one command:
+
+```bash
+gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow
+```
+
+Any other static host works with no code changes — build command `npm run build`, base
+directory `app`, output `app/dist`. The build is ~8.9 MB, of which ~5.9 MB is the prepared
+data.
 
 A clean checkout builds correctly — `prebuild` stages the datasets from `data/prepared/`
 and the MapLibre worker from `node_modules` into `app/public/`, both of which are
