@@ -1,7 +1,8 @@
 /**
- * FUSION - wildfire prevention prioritisation for Spain.
+ * FUSION — wildfire prevention prioritisation for Spain.
  *
- * View 1 (this file's default): current conditions - J1, J3.
+ * Layout direction A, "Situation Board": one rail, the map taking the rest,
+ * a plain-language answer above it and the cell detail floating on selection.
  */
 import { useEffect, useMemo, useState } from 'react'
 import { cellToLatLng } from 'h3-js'
@@ -10,19 +11,31 @@ import { binValues, quantileBreaks, RAMP } from './map/palette'
 import { loadData, weatherIndexForCells } from './data/load'
 import type { DataBundle } from './data/types'
 import {
-  deriveLayers,
-  layerValues,
-  rankOrder,
-  rankPositions,
-  type LayerKey,
+  deriveLayers, layerValues, rankOrder, rankPositions, type LayerKey,
 } from './model/derive'
-import { DetailPanel, LayerSwitcher, RankList, RampLegend, fmt } from './ui/panels'
+import {
+  AnswerStrip, DetailPanel, LayerSwitcher, RankList, RampLegend, fmt,
+  type Headline,
+} from './ui/panels'
 import { Methodology } from './ui/Methodology'
+import { Landing } from './ui/Landing'
 import './styles.css'
 
 type WeekChoice = 'this' | 'last'
 
+/** Peninsular Spain + the Balearics, matching the grid's own window. */
+const SPAIN_BOUNDS: [[number, number], [number, number]] = [[-9.6, 35.9], [4.5, 43.9]]
+
 export default function App() {
+  // The landing page is the default entry; #map goes straight to the console,
+  // which is what the demo opens.
+  const [showMap, setShowMap] = useState(() => location.hash === '#map')
+  useEffect(() => {
+    const onHash = () => setShowMap(location.hash === '#map')
+    addEventListener('hashchange', onHash)
+    return () => removeEventListener('hashchange', onHash)
+  }, [])
+
   const [data, setData] = useState<DataBundle | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [layer, setLayer] = useState<LayerKey>('priority')
@@ -36,19 +49,15 @@ export default function App() {
   }, [])
 
   const wIdx = useMemo(
-    () => (data ? weatherIndexForCells(data.cells, data.weather) : null),
-    [data],
-  )
+    () => (data ? weatherIndexForCells(data.cells, data.weather) : null), [data])
 
   // Both weeks are derived so the ranking delta (F7) has something to compare.
-  const thisWeek = useMemo(
-    () => (data && wIdx ? deriveLayers(data.cells, wIdx, data.weather.this_week.W, data.weather.this_week.M) : null),
-    [data, wIdx],
-  )
-  const lastWeek = useMemo(
-    () => (data && wIdx ? deriveLayers(data.cells, wIdx, data.weather.last_week.W, data.weather.last_week.M) : null),
-    [data, wIdx],
-  )
+  const thisWeek = useMemo(() => (data && wIdx
+    ? deriveLayers(data.cells, wIdx, data.weather.this_week.W, data.weather.this_week.M)
+    : null), [data, wIdx])
+  const lastWeek = useMemo(() => (data && wIdx
+    ? deriveLayers(data.cells, wIdx, data.weather.last_week.W, data.weather.last_week.M)
+    : null), [data, wIdx])
 
   const layers = week === 'this' ? thisWeek : lastWeek
   const order = useMemo(() => (layers ? rankOrder(layers) : null), [layers])
@@ -64,17 +73,28 @@ export default function App() {
     return d
   }, [thisWeek, lastWeek, order])
 
+  /** Everything the answer strip states is computed, never written in. */
+  const headline: Headline | null = useMemo(() => {
+    if (!data || !thisWeek || !lastWeek || !order) return null
+    const tw = data.weather.this_week.W
+    const lw = data.weather.last_week.W
+    let worsened = 0
+    for (let i = 0; i < tw.length; i++) if (tw[i] > lw[i]) worsened++
+    const nowTop = new Set(Array.from(rankOrder(thisWeek).slice(0, 20)))
+    const beforeTop = new Set(Array.from(rankOrder(lastWeek).slice(0, 20)))
+    let turnover = 0
+    nowTop.forEach((i) => { if (!beforeTop.has(i)) turnover++ })
+    return { ranked: order.length, worsened, points: tw.length, turnover }
+  }, [data, thisWeek, lastWeek, order])
+
   const values = useMemo(() => (layers ? layerValues(layers, layer) : null), [layers, layer])
   const bins = useMemo(() => {
     if (!layers || !values) return null
-    const breaks = quantileBreaks(values, layers.noData)
-    return binValues(values, layers.noData, breaks)
+    return binValues(values, layers.noData, quantileBreaks(values, layers.noData))
   }, [layers, values])
 
-  const rankOf = useMemo(() => {
-    if (!order || !layers) return null
-    return rankPositions(order, layers.n)
-  }, [order, layers])
+  const rankOf = useMemo(
+    () => (order && layers ? rankPositions(order, layers.n) : null), [order, layers])
 
   function select(i: number | null) {
     setSelected(i)
@@ -84,27 +104,21 @@ export default function App() {
     }
   }
 
+  if (!showMap) return <Landing onEnter={() => { location.hash = '#map' }} />
+
   if (error) {
     return (
       <div className="boot boot-error">
         <h1>FUSION</h1>
         <p>Could not load the prepared data.</p>
         <code>{error}</code>
-        <p className="muted">Run the pipeline: <code>make data</code></p>
+        <p className="muted">Run the pipeline, then <code>npm run stage:data</code>.</p>
       </div>
     )
   }
-  if (!data || !layers || !bins || !order) {
-    return (
-      <div className="boot">
-        <h1>FUSION</h1>
-        <p className="muted">Loading prepared data…</p>
-      </div>
-    )
+  if (!data || !layers || !bins || !order || !headline) {
+    return <div className="boot"><h1>FUSION</h1><p className="muted">Loading prepared data…</p></div>
   }
-
-  const ranked = order.length
-  const noData = layers.n - ranked
 
   return (
     <div className="app">
@@ -116,41 +130,28 @@ export default function App() {
       ) : null}
 
       <header className="top">
-        <div className="brand">
+        <a className="brand" href="#" onClick={() => setShowMap(false)}>
           <span className="brand-mark">FUSION</span>
-          <span className="brand-sub">
-            wildfire prevention prioritisation · Spain
-          </span>
-        </div>
+          <span className="brand-sub">wildfire prevention · Spain</span>
+        </a>
         <div className="top-right">
           <div className="weeks">
-            <button
-              className={`chip ${week === 'this' ? 'chip-on' : ''}`}
-              onClick={() => setWeek('this')}
-            >
-              This week
-            </button>
-            <button
-              className={`chip ${week === 'last' ? 'chip-on' : ''}`}
-              onClick={() => setWeek('last')}
-            >
-              Last week
-            </button>
+            <button className={`chip ${week === 'this' ? 'chip-on' : ''}`}
+                    onClick={() => setWeek('this')}>This week</button>
+            <button className={`chip ${week === 'last' ? 'chip-on' : ''}`}
+                    onClick={() => setWeek('last')}>Last week</button>
           </div>
-          <button className="chip" onClick={() => setShowMethod(true)}>
-            Methodology
-          </button>
+          <button className="chip" onClick={() => setShowMethod(true)}>Methodology</button>
         </div>
       </header>
+
+      <AnswerStrip h={headline} week={week} />
 
       <main className="grid">
         <aside className="left">
           <RankList
-            cells={data.cells}
-            layers={layers}
-            order={order}
-            selected={selected}
-            onSelect={select}
+            cells={data.cells} layers={layers} order={order}
+            selected={selected} onSelect={select}
             deltas={week === 'this' ? deltas : null}
           />
         </aside>
@@ -158,51 +159,30 @@ export default function App() {
         <section className="centre">
           <div className="map-wrap">
             <HexMap
-              cells={data.cells.cells}
-              bins={bins}
-              palette={RAMP}
-              selected={selected}
-              onSelect={select}
-              flyTo={flyTo}
+              cells={data.cells.cells} bins={bins} palette={RAMP}
+              selected={selected} onSelect={select} flyTo={flyTo}
+              fitTo={SPAIN_BOUNDS}
             />
-            <div className="map-overlay-top">
-              <LayerSwitcher value={layer} onChange={setLayer} />
-            </div>
-            <div className="map-overlay-bottom">
-              <RampLegend layer={layer} />
-            </div>
+            <div className="map-overlay-top"><LayerSwitcher value={layer} onChange={setLayer} /></div>
+            <div className="map-overlay-bottom"><RampLegend layer={layer} /></div>
+            {selected !== null ? (
+              <div className="map-overlay-right">
+                <DetailPanel
+                  cells={data.cells} layers={layers} i={selected}
+                  rank={rankOf && rankOf[selected] >= 0 ? rankOf[selected] : null}
+                  onClose={() => setSelected(null)}
+                />
+              </div>
+            ) : null}
           </div>
           <div className="statusbar">
-            <span>
-              <b>{fmt.format(ranked)}</b> cells ranked
-            </span>
-            <span>
-              <b>{fmt.format(noData)}</b> no data / not burnable
-            </span>
+            <span><b>{fmt.format(order.length)}</b> ranked</span>
+            <span><b>{fmt.format(layers.n - order.length)}</b> no data / not burnable</span>
             <span className="muted">
-              Weather: {data.weather.source} · {data.weather.generated_utc}
+              {data.weather.source} · {data.weather.generated_utc.replace('T', ' ').replace('+00:00', ' UTC')}
             </span>
           </div>
         </section>
-
-        <aside className="right">
-          {selected !== null ? (
-            <DetailPanel
-              cells={data.cells}
-              layers={layers}
-              i={selected}
-              rank={rankOf ? (rankOf[selected] >= 0 ? rankOf[selected] : null) : null}
-            />
-          ) : (
-            <div className="detail detail-empty">
-              <h3>Select a zone</h3>
-              <p className="muted">
-                Click a cell on the map, or a row in the ranking, to see why it
-                scores as it does.
-              </p>
-            </div>
-          )}
-        </aside>
       </main>
 
       {showMethod ? <Methodology onClose={() => setShowMethod(false)} /> : null}

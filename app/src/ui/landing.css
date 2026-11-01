@@ -1,0 +1,168 @@
+/* Landing page. Shares the console's dark ground and ember accent, but runs a
+   wider measure and a larger type scale — it is read, not operated. */
+
+.lp {
+  min-height: 100%;
+  background: var(--plane);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-y: auto;
+}
+.lp a { color: var(--accent); text-decoration: none; }
+.lp a:hover { text-decoration: underline; }
+.lp h1, .lp h2, .lp h3 { margin: 0; text-wrap: balance; line-height: 1.14; }
+.lp p { margin: 0; }
+
+.lp-nav {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 40px;
+  background: rgba(13, 13, 13, 0.88);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--hair);
+}
+.lp-brand { font-weight: 700; font-size: 18px; letter-spacing: 0.15em; color: var(--accent); }
+.lp-enter-sm {
+  background: none; border: 1px solid var(--hair); border-radius: 999px;
+  color: var(--ink-2); font: inherit; font-size: 13px; padding: 6px 15px; cursor: pointer;
+}
+.lp-enter-sm:hover { border-color: var(--accent); color: var(--ink); }
+
+/* ------------------------------------------------------------------ hero */
+
+.lp-hero { max-width: 1040px; margin: 0 auto; padding: 72px 40px 0; }
+.lp-eyebrow {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 20px;
+}
+.lp-hero h1 {
+  font-size: clamp(2rem, 1.1rem + 3.1vw, 3.5rem);
+  font-weight: 700; letter-spacing: -0.025em; max-width: 19ch;
+}
+.lp-fig { color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lp-lede {
+  margin-top: 22px; max-width: 64ch;
+  font-size: 1.06rem; color: var(--ink-2);
+}
+.lp-lede em { color: var(--ink); font-style: italic; }
+.lp-lede-strong { color: var(--ink); font-size: 1.14rem; margin-top: 18px; }
+
+.lp-cta { display: flex; align-items: center; gap: 22px; margin-top: 32px; flex-wrap: wrap; }
+.lp-enter {
+  background: var(--accent); color: #1a1008;
+  border: 0; border-radius: 4px;
+  font: inherit; font-size: 15px; font-weight: 700;
+  padding: 13px 26px; cursor: pointer;
+}
+.lp-enter:hover { background: #f5a63c; }
+.lp-enter:focus-visible, .lp-enter-sm:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 3px;
+}
+.lp-link { font-size: 14px; }
+
+.lp-stats {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 1px; background: var(--hair);
+  border: 1px solid var(--hair); border-radius: 4px;
+  margin: 56px 0 0; overflow: hidden;
+}
+.lp-stats > div { background: var(--surface); padding: 16px 18px; }
+.lp-stats dt {
+  font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 6px;
+}
+.lp-stats dd {
+  margin: 0; font-size: 1.6rem; font-weight: 600;
+  font-variant-numeric: tabular-nums; color: var(--ink);
+}
+
+/* --------------------------------------------------------------- sections */
+
+.lp-sec { max-width: 1040px; margin: 0 auto; padding: 68px 40px 0; }
+.lp-sec h2 {
+  font-size: clamp(1.35rem, 1.1rem + 0.9vw, 1.9rem);
+  font-weight: 600; letter-spacing: -0.015em;
+}
+.lp-sub { margin-top: 14px; max-width: 68ch; color: var(--ink-2); }
+
+/* the equation */
+.lp-eq {
+  display: flex; align-items: stretch; gap: 14px; flex-wrap: wrap;
+  margin-top: 30px;
+}
+.lp-eq-term {
+  flex: 1 1 240px; display: flex; flex-direction: column; gap: 7px;
+  background: var(--surface); border: 1px solid var(--hair);
+  border-top: 2px solid var(--axis);
+  border-radius: 4px; padding: 18px 20px;
+}
+.lp-eq-term b { font-size: 1.02rem; font-weight: 600; }
+.lp-eq-term i { font-style: normal; font-size: 0.86rem; color: var(--muted); line-height: 1.5; }
+.lp-eq-out { border-top-color: var(--accent); }
+.lp-eq-out b { color: var(--accent); }
+.lp-eq-op {
+  align-self: center; font-size: 1.4rem; color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* steps */
+.lp-steps {
+  list-style: none; counter-reset: s; margin: 30px 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px;
+  background: var(--hair); border: 1px solid var(--hair); border-radius: 4px;
+  overflow: hidden;
+}
+.lp-steps li {
+  counter-increment: s; background: var(--surface); padding: 22px 24px;
+}
+.lp-steps h3 {
+  font-size: 1rem; font-weight: 600; margin-bottom: 8px;
+  display: flex; align-items: baseline; gap: 10px;
+}
+.lp-steps h3::before {
+  content: counter(s);
+  font-size: 0.72rem; font-weight: 600; color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--accent); border-radius: 3px;
+  padding: 1px 6px; flex: 0 0 auto;
+}
+.lp-steps p { font-size: 0.92rem; color: var(--ink-2); }
+
+/* sources */
+.lp-sources { list-style: none; margin: 26px 0 0; padding: 0; }
+.lp-sources li {
+  display: grid; grid-template-columns: 180px 1fr auto;
+  gap: 18px; align-items: baseline;
+  padding: 12px 2px; border-bottom: 1px solid var(--grid);
+  font-size: 0.93rem;
+}
+.lp-sources b { font-weight: 600; }
+.lp-sources span { color: var(--ink-2); }
+.lp-sources i {
+  font-style: normal; font-size: 0.76rem; color: var(--muted);
+  border: 1px solid var(--grid); border-radius: 3px; padding: 2px 8px; white-space: nowrap;
+}
+.lp-caveat {
+  margin-top: 26px; padding: 15px 18px; max-width: 72ch;
+  background: var(--surface-2); border-left: 3px solid var(--warning);
+  border-radius: 3px; font-size: 0.92rem; color: var(--ink-2);
+}
+.lp-caveat b { color: var(--ink); }
+.lp-caveat em { color: var(--ink); font-style: italic; }
+
+/* footer */
+.lp-foot {
+  max-width: 1040px; margin: 76px auto 0; padding: 40px;
+  border-top: 1px solid var(--hair);
+  display: flex; align-items: center; gap: 26px; flex-wrap: wrap;
+}
+.lp-foot p { font-size: 0.86rem; color: var(--muted); }
+
+@media (max-width: 900px) {
+  .lp-stats { grid-template-columns: repeat(2, 1fr); }
+  .lp-steps { grid-template-columns: 1fr; }
+  .lp-sources li { grid-template-columns: 1fr; gap: 4px; }
+  .lp-hero, .lp-sec, .lp-foot { padding-left: 24px; padding-right: 24px; }
+}
+@media (prefers-reduced-motion: reduce) { .lp * { transition: none !important; } }

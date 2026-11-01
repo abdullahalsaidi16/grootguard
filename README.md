@@ -51,7 +51,19 @@ npm run build    # static site in app/dist/
 npm test         # model tests (C7)
 ```
 
+The app opens on a **landing page** explaining the problem, the model and the sources, with
+its headline figures read from the prepared data at runtime so they cannot drift from it.
+`#map` goes straight to the console — that is what the demo opens.
+
 `?nobasemap=1` forces the offline style, to exercise the C3 no-network path deliberately.
+
+### Layout
+
+The console follows layout direction A, "Situation Board": one rail, the map taking the
+rest, a plain-language answer strip above it, and the cell detail floating over the map on
+selection rather than holding a column open. Measured against the first build: map area
+52% -> 67%, chrome 43% -> 17% of width, ranking rows 57px -> 35px so all twenty zones fit
+without scrolling, and the zone name and its score are no longer the same size.
 
 `predev`/`prebuild` stage two things into `app/public/` (both gitignored, regenerated every
 run): the prepared datasets from `data/prepared/`, and MapLibre's web worker. The worker

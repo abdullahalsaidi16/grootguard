@@ -68,6 +68,8 @@ export interface HexMapProps {
   outline?: Uint8Array | null
   outlineColor?: string
   flyTo?: { lng: number; lat: number; zoom?: number } | null
+  /** [[west, south], [east, north]] — framed once, on first load */
+  fitTo?: [[number, number], [number, number]] | null
   interactive?: boolean
   onHover?: (i: number | null, x: number, y: number) => void
 }
@@ -82,6 +84,7 @@ export function HexMap({
   outline = null,
   outlineColor = '#ffffff',
   flyTo = null,
+  fitTo = null,
   interactive = true,
   onHover,
 }: HexMapProps) {
@@ -122,6 +125,9 @@ export function HexMap({
       const m = new MapLibreMap({
         container: holder.current,
         style,
+        // Framed by fitBounds once the layers are in, so the country fills
+        // whatever width the layout gives the map rather than a fixed zoom
+        // tuned for one panel arrangement.
         center: [-3.6, 40.0],
         zoom: 5.1,
         attributionControl: false,
@@ -171,6 +177,9 @@ export function HexMap({
         ready.current = true
         pending.current = false
         paint()
+        if (fitTo) {
+          m.fitBounds(fitTo, { padding: 28, duration: 0 })
+        }
       }
       // A map created while the tab is hidden may have already finished its
       // style by the time we get here, in which case 'load' never fires again.
